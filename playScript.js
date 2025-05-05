@@ -55,7 +55,7 @@
       container.style.fontSize = '12px';
       container.style.lineHeight = '1.4';
       container.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
-      container.style.maxWidth = '95%';
+      container.style.maxWidth = '100%';
 
       container.innerHTML = `
         <div><strong>🕹️ Play Count:</strong> ${playCount}</div>
