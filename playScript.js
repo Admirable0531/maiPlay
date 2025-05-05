@@ -7,16 +7,14 @@
     'music_remaster_score_back': 'remaster'
   };
 
-  const blocks = [...document.querySelectorAll('div[class*="music_"][class*="_score_back"]')];
+  const blocks = [...document.querySelectorAll('div[class*="_score_back"]')];
+  console.log("🎵 Found", blocks.length, "music blocks");
+
   for (const block of blocks) {
     const form = block.querySelector('form[action*="musicDetail"]');
     const idx = form?.querySelector('input[name="idx"]')?.value;
-    if (!idx) {
-      console.warn("⚠️ No idx found, skipping");
-      continue;
-    }
+    if (!idx) continue;
 
-    // Get diff type from outer class
     const classList = [...block.classList];
     const diffClass = classList.find(c => c.endsWith('_score_back'));
     const diffId = diffMap[diffClass] || 'master';
@@ -31,10 +29,7 @@
       const doc = parser.parseFromString(html, 'text/html');
 
       const targetDiv = doc.querySelector(`#${diffId}`);
-      if (!targetDiv) {
-        console.warn("❌ Difficulty section not found in detail page:", diffId);
-        continue;
-      }
+      if (!targetDiv) continue;
 
       let playCount = 'N/A';
       let lastPlayed = 'N/A';
@@ -45,27 +40,25 @@
         if (text.includes("Last played date")) lastPlayed = tds[i + 1]?.textContent.trim();
       }
 
-      const container = document.createElement('div');
-      container.style.marginTop = '6px';
-      container.style.padding = '6px 10px';
-      container.style.border = '1px solid #5ac8fa';
-      container.style.borderRadius = '8px';
-      container.style.background = 'linear-gradient(135deg, #e0f7ff, #f0fcff)';
-      container.style.color = '#333';
-      container.style.fontSize = '12px';
-      container.style.lineHeight = '1.4';
-      container.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
-      container.style.maxWidth = '100%';
+      const outer = document.createElement('div');
+      outer.className = 't_l';
+      outer.style.marginTop = '4px';
 
-      container.innerHTML = `
-        <div><strong>🕹️ Play Count:</strong> ${playCount}</div>
-        <div><strong>📅 Last Played:</strong> ${lastPlayed}</div>
-      `;
+      const playCountDiv = document.createElement('div');
+      playCountDiv.className = 'music_score_block w_120 d_ib t_r f_12';
+      playCountDiv.textContent = `🕹️ ${playCount} plays`;
 
-      block.appendChild(container);
+      const lastPlayedDiv = document.createElement('div');
+      lastPlayedDiv.className = 'music_score_block w_310 m_r_0 d_ib t_r f_12';
+      lastPlayedDiv.textContent = `📅 ${lastPlayed}`;
+
+      outer.appendChild(playCountDiv);
+      outer.appendChild(lastPlayedDiv);
+
+      block.appendChild(outer);
       await new Promise(r => setTimeout(r, 400));
     } catch (e) {
-      console.error(`🔥 Fetch error for idx=${idx} diff=${diffId}`, e);
+      console.error('❌ Error fetching for idx=', idx, e);
     }
   }
 })();
