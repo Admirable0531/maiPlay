@@ -1,0 +1,71 @@
+(async () => {
+  const diffMap = {
+    'music_basic_score_back': 'basic',
+    'music_advanced_score_back': 'advanced',
+    'music_expert_score_back': 'expert',
+    'music_master_score_back': 'master',
+    'music_remaster_score_back': 'remaster'
+  };
+
+  const blocks = [...document.querySelectorAll('div[class*="music_"][class*="_score_back"]')];
+  for (const block of blocks) {
+    const form = block.querySelector('form[action*="musicDetail"]');
+    const idx = form?.querySelector('input[name="idx"]')?.value;
+    if (!idx) {
+      console.warn("⚠️ No idx found, skipping");
+      continue;
+    }
+
+    // Get diff type from outer class
+    const classList = [...block.classList];
+    const diffClass = classList.find(c => c.endsWith('_score_back'));
+    const diffId = diffMap[diffClass] || 'master';
+
+    try {
+      const res = await fetch(`https://maimaidx-eng.com/maimai-mobile/record/musicDetail/?idx=${encodeURIComponent(idx)}`, {
+        credentials: 'include'
+      });
+
+      const html = await res.text();
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, 'text/html');
+
+      const targetDiv = doc.querySelector(`#${diffId}`);
+      if (!targetDiv) {
+        console.warn("❌ Difficulty section not found in detail page:", diffId);
+        continue;
+      }
+
+      let playCount = 'N/A';
+      let lastPlayed = 'N/A';
+      const tds = targetDiv.querySelectorAll('td');
+      for (let i = 0; i < tds.length; i++) {
+        const text = tds[i].textContent.trim();
+        if (text.includes("PLAY COUNT")) playCount = tds[i + 1]?.textContent.trim();
+        if (text.includes("Last played date")) lastPlayed = tds[i + 1]?.textContent.trim();
+      }
+
+      const container = document.createElement('div');
+      container.style.marginTop = '6px';
+      container.style.padding = '6px 10px';
+      container.style.border = '1px solid #5ac8fa';
+      container.style.borderRadius = '8px';
+      container.style.background = 'linear-gradient(135deg, #e0f7ff, #f0fcff)';
+      container.style.color = '#333';
+      container.style.fontSize = '12px';
+      container.style.lineHeight = '1.4';
+      container.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+      container.style.maxWidth = '95%';
+
+      container.innerHTML = `
+        <div><strong>🕹️ Play Count:</strong> ${playCount}</div>
+        <div><strong>📅 Last Played:</strong> ${lastPlayed}</div>
+      `;
+
+      block.appendChild(container);
+      await new Promise(r => setTimeout(r, 400));
+    } catch (e) {
+      console.error(`🔥 Fetch error for idx=${idx} diff=${diffId}`, e);
+    }
+  }
+})();
